@@ -1,26 +1,28 @@
 import hmac
 import hashlib
 from PIL import Image
-from binascii import unhexlify
-from random import randint
 
 def run():
     # get image
-    jpg = './miawallace.jpg'
+    jpg = './yellow.jpg'
 
     # open the image with PIL
     img = Image.open(jpg, 'r')
 
     a = get_input()
-    print(a)
+
     if(check_sizes(img.size, len(a)*8)):
         print('message can fit')
-        encode(img, a)
+        newImg = img.copy()
+        newImg = encode(newImg, a)
+        newImg.save('encodedfile.jpg')
     else:
         print("message cannot fit")
 
 
 def half_mac(plaintext):
+    ''' return the first ten bytes of the messages hmac '''
+
     plain = bytes(plaintext, 'UTF-8')
     secret = b'secret'
     auth = hmac.new(secret, plain, hashlib.sha256)
@@ -41,7 +43,6 @@ def trans_ascii(ascii):
 def get_input():
     ''' retrieve the input message '''
     return input("What message would you like to hide?")
-    #return ''.join(list(map(lambda x: pad_bits(str(bin(ord(x)))[2:]), i)))
 
 def check_sizes(imgsz, txtsz):
     ''' return true if message can be fit inside of image '''
@@ -85,5 +86,13 @@ def encode(img, b):
                         newT.append(t)
                     else:
                         newT.append(t-1)
-    print(newT)
+
+    # split new pixel values into 3-tuples
+    newPixels = [tuple(newT[i:i+3]) for i in range(0, len(newT) - 2)]
+
+    # insert data into beginning of the file
+    img.putdata(newPixels)
+
+    return img
+
 run()
