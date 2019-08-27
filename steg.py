@@ -1,6 +1,15 @@
 import hmac
 import hashlib
+import binascii
 from PIL import Image
+
+def pad_hex(b):
+    if len(b) == 1:
+        return '0' + b
+    return b
+
+def bth(binary):
+    return pad_hex(hex(int(binary, 2))[2:])
 
 def read_img():
     # load encoded file
@@ -12,12 +21,25 @@ def read_img():
     # grab data
     data = list(img.getdata())
     #print(data)
-    bstr = ''
+    bs = []
     for d in data:
+        bstr = ''
         for t in d:
             bstr += str(t % 2)
-    print(bstr)
+            bs.append(bstr)
+            bstr = ''
+    bs = ''.join(bs)
+    newer = [bth(''.join(list(bs[x:x+8]))) for x in range(0, len(bs)-8, 8)]
+    
+    f = open('filer.txt', 'w')
 
+    for n in newer:
+        f.write(n + ' ')
+
+    f.close()
+    
+    print('newer')
+    print(newer)
 
 
 def run():
@@ -52,8 +74,11 @@ def half_mac(plaintext):
 
 def trans_ascii(ascii):
     a = ''
+    print('s')
     for c in ascii:
-        a += str(bin(ord(c))[2:])
+        s = pad_bits(str(bin(ord(c))[2:]))
+        print(s)
+        a += s
     print(a)
     return a
 
@@ -68,6 +93,12 @@ def check_sizes(imgsz, txtsz):
 def init_buffers(plaintext):
     ''' initialize buffers for encode/decode processes '''
     zs = '00000000'
+    print('mac:')
+    h = half_mac(plaintext)
+    x = [list(bth(''.join(h[x:x+8]))) for x in range(0, len(h), 8)]
+    print(x)
+    print(h)
+    
     return zs + half_mac(plaintext) + zs
 
 def pad_bits(bits):
@@ -86,8 +117,20 @@ def encode(img, b):
     print('pixels')
     print(pixels[0, 0])
     # initialize final payload wrapped by buffers
+    
     payload = buffers + trans_ascii(b) + buffers
+    print('payload:')
     print(payload)
+    
+    newer = [bth(''.join(list(payload[x:x+8]))) for x in range(0, len(payload), 8)]
+    print(newer) 
+    f = open('tester.txt', 'w')
+
+    for n in newer:
+        f.write(n + ' ')
+
+    f.close()
+    
     newT = []
     for d in data:
         for t in d:
@@ -101,7 +144,6 @@ def encode(img, b):
                     if p % 2 == 0:
                         # payload data is also even
                         newT.append(t)
-
                         # payload data is odd
                     else:
                         if t == 0:
@@ -115,6 +157,7 @@ def encode(img, b):
                     else:
                         newT.append(t-1)
 
+    
     # split new pixel values into 3-tuples
     newPixels = [tuple(newT[i:i+3]) for i in range(0, len(newT) - 2, 3)]
     
@@ -123,5 +166,5 @@ def encode(img, b):
     
     img.save('encodedfile.png')
 
-read_img()
-#run()
+#read_img()
+run()
