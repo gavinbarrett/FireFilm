@@ -4,14 +4,20 @@ from PIL import Image
 
 def read_img():
     # load encoded file
-    jpg = './encodedfile.jpg'
+    png = './encodedfile.png'
     
     # open image file handle in read mode
-    img = Image.open(jpg, 'r')
+    img = Image.open(png, 'r')
 
     # grab data
     data = list(img.getdata())
-    print(data)
+    #print(data)
+    bstr = ''
+    for d in data:
+        for t in d:
+            bstr += str(t % 2)
+    print(bstr)
+
 
 
 def run():
@@ -26,8 +32,7 @@ def run():
     if(check_sizes(img.size, len(a)*8)):
         print('message can fit')
         newImg = img.copy()
-        newImg = encode(newImg, a)
-        newImg.save('encodedfile.jpg')
+        encode(newImg, a)
     else:
         print("message cannot fit")
 
@@ -76,7 +81,10 @@ def encode(img, b):
 
     # read in image data
     data = list(img.getdata())
-
+    pixels = img.load()
+    pixels[0,0] = (0,0,100)
+    print('pixels')
+    print(pixels[0, 0])
     # initialize final payload wrapped by buffers
     payload = buffers + trans_ascii(b) + buffers
     print(payload)
@@ -110,13 +118,10 @@ def encode(img, b):
     # split new pixel values into 3-tuples
     newPixels = [tuple(newT[i:i+3]) for i in range(0, len(newT) - 2, 3)]
     
-    print('newpixels:')
-    print(newPixels)
-
     # insert data into beginning of the file
     img.putdata(newPixels)
+    
+    img.save('encodedfile.png')
 
-    return img
-
-#read_img()
-run()
+read_img()
+#run()
