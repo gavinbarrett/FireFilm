@@ -2,9 +2,21 @@ import hmac
 import hashlib
 from PIL import Image
 
+def read_img():
+    # load encoded file
+    jpg = './encodedfile.jpg'
+    
+    # open image file handle in read mode
+    img = Image.open(jpg, 'r')
+
+    # grab data
+    data = list(img.getdata())
+    print(data)
+
+
 def run():
     # get image
-    jpg = './yellow.jpg'
+    jpg = './miawallace.jpg'
 
     # open the image with PIL
     img = Image.open(jpg, 'r')
@@ -74,13 +86,21 @@ def encode(img, b):
             if payload:
                 p = int(payload[0])
                 payload = payload[1:]
+                
+                # image data is even
                 if t % 2 == 0:
+                    # image data is even
                     if p % 2 == 0:
+                        # payload data is also even
                         newT.append(t)
-                    elif p == 0:
-                        newT.append(t)
+
+                        # payload data is odd
                     else:
-                        newT.append(t-1)
+                        if t == 0:
+                            newT.append(t+1)
+                        else:
+                            newT.append(t-1)
+                # image data is odd
                 else:
                     if p % 2 == 1:
                         newT.append(t)
@@ -88,11 +108,15 @@ def encode(img, b):
                         newT.append(t-1)
 
     # split new pixel values into 3-tuples
-    newPixels = [tuple(newT[i:i+3]) for i in range(0, len(newT) - 2)]
+    newPixels = [tuple(newT[i:i+3]) for i in range(0, len(newT) - 2, 3)]
+    
+    print('newpixels:')
+    print(newPixels)
 
     # insert data into beginning of the file
     img.putdata(newPixels)
 
     return img
 
+#read_img()
 run()
