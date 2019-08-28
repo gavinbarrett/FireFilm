@@ -5,116 +5,18 @@ import binascii
 from PIL import Image
 
 def pad_hex(b):
+    ''' pad a single hex character with a zero '''
     if len(b) == 1:
         return '0' + b
-    elif len(b) == 0:
-        return '00'
     return b
 
 def bth(binary):
+    ''' turn a binary string into a padded hex string '''
     return pad_hex(hex(int(binary, 2))[2:])
-
-def read_img():
-    # load encoded file
-    png = './encodedfile.png'
-    
-    # open image file handle in read mode
-    img = Image.open(png, 'r')
-
-    # grab data
-    data = list(img.getdata())
-    bs = []
-    for d in data:
-        bstr = ''
-        for t in d:
-            bstr += str(t % 2)
-            bs.append(bstr)
-            bstr = ''
-    bs = ''.join(bs)
-
-    newer = [bth(''.join(list(bs[x:x+8]))) for x in range(0, len(bs)-8, 8)]
-     
-    # read in potential encoding
-    n = newer[0:9]
-    #print(n)
-    
-    # if zero padding exists in the first nine bites, consider the text between as the hash
-    if (n[0] == '00' and n[1] == '00' and n[len(n)-2] == '00' and n[len(n)-1] == '00'):
-        digest = ''.join(n[2:7])
-        print('Digest: ' + digest)
-    
-
-        rest = ''.join(newer[9:len(newer)])
-        #print(rest) 
-        
-        x = re.search(digest, rest)
-        #print('x')
-        #diff = x.end()-x.start()
-        #print(x.end()-x.start())
-
-        message = rest[0:x.start()-4]
-        message = [message[i:i+2] for i in range(0, len(message), 2)]
-        print("\nmessage:")
-        print(message)
-        
-        a = ''
-        for m in message:
-            a += chr(int(m, 16))
-        print('\nmessage is:')
-        print(a)
-    else:
-        print('no hash found')
-
-    
-
-
-    # iterate through newer. array must consist of two bytes of zeroes followed by five bytes from a hash of the message and then two more zero bytes
-    # we then must read the remaining bytes of the file until we find the ending buffer, which is the same buffer as above. If we don't find it, encoding is invalid. If we do find it, everything in between the two buffers contains the message. This can now be decoded byte by byte into ascii
-    
-    f = open('rest.txt', 'w')
-    for n in rest:
-        f.write(n + ' ')
-    f.close()
-
-
-
-def run():
-    # get image
-    jpg = './pulpfiction.png'
-
-    # open the image with PIL
-    img = Image.open(jpg, 'r')
-
-    a = get_input()
-
-    if(check_sizes(img.size, len(a)*8)):
-        print('message can fit')
-        newImg = img.copy()
-        encode(newImg, a)
-    else:
-        print("message cannot fit")
-
-
-def half_mac(plaintext):
-    ''' return the first ten bytes of the messages hmac '''
-
-    plain = bytes(plaintext, 'UTF-8')
-    secret = b'secret'
-    auth = hmac.new(secret, plain, hashlib.sha256)
-    hash_head = auth.hexdigest()[0:10]
-    c = ''
-    for a in range(0, len(hash_head), 2):
-        
-        c += pad_bits(bin(int(hash_head[a:a+2], 16))[2:])
-    print(c)
-    return c
 
 def trans_ascii(ascii):
     ''' turn an ascii character into its binary string representation '''
     return ''.join(list(map(lambda x: pad_bits(str(bin(ord(x))[2:])), ascii)))
-    #a = ''
-    #for c in ascii:
-    #    a += pad_bits(str(bin(ord(c))[2:]))
 
 def get_input():
     ''' retrieve the input message '''
@@ -135,14 +37,69 @@ def pad_bits(bits):
         return ((8 - (len(bits) % 8)) * '0') + bits
     return bits
 
+def half_mac(plaintext):
+    ''' return the first ten bytes of the messages hmac '''
+    plain = bytes(plaintext, 'UTF-8')
+    secret = b'secret'
+    auth = hmac.new(secret, plain, hashlib.sha256)
+    hash_head = auth.hexdigest()[0:10]
+    c = ''
+    for a in range(0, len(hash_head), 2):
+        c += pad_bits(bin(int(hash_head[a:a+2], 16))[2:])
+    return c
+
+def read_img():
+    # load encoded file
+    png = './encodedfile.png'
+    
+    # open image file handle in read mode
+    img = Image.open(png, 'r')
+
+    # grab data
+    data = list(img.getdata())
+    bs = []
+    for d in data:
+        bstr = ''
+        for t in d:
+            bstr += str(t % 2)
+            bs.append(bstr)
+            bstr = ''
+    bs = ''.join(bs)
+    newer = [bth(''.join(list(bs[x:x+8]))) for x in range(0, len(bs)-8, 8)]
+     
+    # read in potential encoding
+    n = newer[0:9]
+    
+    # if zero padding exists in the first nine bytes, consider the text between as the hash digest
+    if (n[0] == '00' and n[1] == '00' and n[len(n)-2] == '00' and n[len(n)-1] == '00'):
+        # grab potential message digest
+        digest = ''.join(n[2:7])
+        print('Digest: ' + digest)
+    
+        # save the rest of the file info
+        rest = ''.join(newer[9:len(newer)])
+        
+        # search the remainder of the file for the end buffer
+        x = re.search(digest, rest)
+
+        # save the hex between the start and end buffers
+        hex_message = rest[0:x.start()-4]
+
+        #
+        hex_message = [hex_message[i:i+2] for i in range(0, len(hex_message), 2)]
+
+        #
+        ascii_message = ''.join(list(map(lambda x: chr(int(x, 16)), hex_message)))
+        print('\nmessage is:')
+        print(ascii_message)
+    else:
+        print('no hash found')
+
 def encode(img, b):
     ''' encode message into the image '''
     # get dynamic buffer to demarcate message
     buffers = init_buffers(b)
-    #yss = [pad_bits(buffers[x:x+8]) for x in range(0, len(buffers), 8)]
-    #print(yss)
-    #print('buffers')
-    #print(buffers)
+    
     # read in image data
     data = list(img.getdata())
     
@@ -151,11 +108,6 @@ def encode(img, b):
     
     # join each byte together and interpret it as hexadecimal
     newer = [bth(pad_bits(''.join(list(payload[x:x+8])))) for x in range(0, len(payload), 8)]
-    #TODO: remove below after testing
-    f = open('tester.txt', 'w')
-    for n in newer:
-        f.write(n + ' ')
-    f.close()
     
     newT = []
     for d in data:
@@ -191,5 +143,23 @@ def encode(img, b):
     
     # save image as png; saving as jpg will compress and corrupt data
     img.save('encodedfile.png')
+
+
+def run():
+    # get image
+    jpg = './pulpfiction.png'
+
+    # open the image with PIL
+    img = Image.open(jpg, 'r')
+
+    a = get_input()
+
+    if(check_sizes(img.size, len(a)*8)):
+        print('message can fit')
+        newImg = img.copy()
+        encode(newImg, a)
+    else:
+        print("message cannot fit")
+
 read_img()
 #run()
