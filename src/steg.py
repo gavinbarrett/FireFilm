@@ -21,7 +21,7 @@ def trans_ascii(ascii):
 
 def get_input():
     ''' retrieve the input message '''
-    return input("What message would you like to hide?")
+    return input("What message would you like to hide? ")
 
 def check_sizes(imgsz, txtsz):
     ''' return true if message can be fit inside of image '''
@@ -49,7 +49,7 @@ def half_mac(plaintext):
         c += pad_bits(bin(int(hash_head[a:a+2], 16))[2:])
     return c
 
-def read_img():
+def decode():
     # load encoded file
     png = './encodedfile.png'
     
@@ -143,12 +143,9 @@ def encode(img, b):
     img.putdata(newPixels)
     
     # save image as png; saving as jpg will compress and corrupt data
-    img.save('encodedfile.png')
+    img.save('./encodedfile.png')
 
-def run():
-    # get image
-    jpg = './pulpfiction.png'
-
+def init_encoding(jpg):
     # open the image with PIL
     img = Image.open(jpg, 'r')
 
@@ -160,6 +157,3 @@ def run():
         encode(newImg, a)
     else:
         print("message cannot fit")
-
-read_img()
-#run()
