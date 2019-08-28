@@ -1,5 +1,13 @@
+# Core Tools
+------------
+-> update regex to match only one search in order to save unnecessary search time
 -> update check for message length to include its buffers
--> reconstitute buffer message to locate message
+
+# Frontend
+----------
+-> Develop frontend mockups for HelioFilm microservice
+
+# Misc.
+-------
 -> consider allowing users with private keys in order to encrypt/decrypt messages
 
--> proposed names: HelioFilm

@@ -36,12 +36,12 @@ def read_img():
      
     # read in potential encoding
     n = newer[0:9]
-    print(n)
+    #print(n)
     
     # if zero padding exists in the first nine bites, consider the text between as the hash
     if (n[0] == '00' and n[1] == '00' and n[len(n)-2] == '00' and n[len(n)-1] == '00'):
         digest = ''.join(n[2:7])
-        print(digest)
+        print('Digest: ' + digest)
     
 
         rest = ''.join(newer[9:len(newer)])
@@ -54,13 +54,14 @@ def read_img():
 
         message = rest[0:x.start()-4]
         message = [message[i:i+2] for i in range(0, len(message), 2)]
-        print("message")
+        print("\nmessage:")
         print(message)
         
         a = ''
         for m in message:
             a += chr(int(m, 16))
-        print('message is ' + a)
+        print('\nmessage is:')
+        print(a)
     else:
         print('no hash found')
 
@@ -79,7 +80,7 @@ def read_img():
 
 def run():
     # get image
-    jpg = './miawallace.jpg'
+    jpg = './pulpfiction.png'
 
     # open the image with PIL
     img = Image.open(jpg, 'r')
