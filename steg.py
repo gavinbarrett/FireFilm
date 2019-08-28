@@ -1,3 +1,4 @@
+import os
 import re
 import hmac
 import hashlib
@@ -40,7 +41,7 @@ def pad_bits(bits):
 def half_mac(plaintext):
     ''' return the first ten bytes of the messages hmac '''
     plain = bytes(plaintext, 'UTF-8')
-    secret = b'secret'
+    secret = os.urandom(16)
     auth = hmac.new(secret, plain, hashlib.sha256)
     hash_head = auth.hexdigest()[0:10]
     c = ''
@@ -82,13 +83,13 @@ def read_img():
         # search the remainder of the file for the end buffer
         x = re.search(digest, rest)
 
-        # save the hex between the start and end buffers
+        # save the string between the start and end buffers
         hex_message = rest[0:x.start()-4]
 
-        #
+        # reinterpret string as hex strings
         hex_message = [hex_message[i:i+2] for i in range(0, len(hex_message), 2)]
 
-        #
+        # reinterpret hex strings as ascii characters
         ascii_message = ''.join(list(map(lambda x: chr(int(x, 16)), hex_message)))
         print('\nmessage is:')
         print(ascii_message)
@@ -143,7 +144,6 @@ def encode(img, b):
     
     # save image as png; saving as jpg will compress and corrupt data
     img.save('encodedfile.png')
-
 
 def run():
     # get image
