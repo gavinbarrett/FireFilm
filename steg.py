@@ -1,3 +1,4 @@
+import re
 import hmac
 import hashlib
 import binascii
@@ -6,6 +7,8 @@ from PIL import Image
 def pad_hex(b):
     if len(b) == 1:
         return '0' + b
+    elif len(b) == 0:
+        return '00'
     return b
 
 def bth(binary):
@@ -20,7 +23,6 @@ def read_img():
 
     # grab data
     data = list(img.getdata())
-    #print(data)
     bs = []
     for d in data:
         bstr = ''
@@ -29,17 +31,50 @@ def read_img():
             bs.append(bstr)
             bstr = ''
     bs = ''.join(bs)
+
     newer = [bth(''.join(list(bs[x:x+8]))) for x in range(0, len(bs)-8, 8)]
+     
+    # read in potential encoding
+    n = newer[0:9]
+    print(n)
     
-    f = open('filer.txt', 'w')
+    # if zero padding exists in the first nine bites, consider the text between as the hash
+    if (n[0] == '00' and n[1] == '00' and n[len(n)-2] == '00' and n[len(n)-1] == '00'):
+        digest = ''.join(n[2:7])
+        print(digest)
+    
 
-    for n in newer:
+        rest = ''.join(newer[9:len(newer)])
+        #print(rest) 
+        
+        x = re.search(digest, rest)
+        #print('x')
+        #diff = x.end()-x.start()
+        #print(x.end()-x.start())
+
+        message = rest[0:x.start()-4]
+        message = [message[i:i+2] for i in range(0, len(message), 2)]
+        print("message")
+        print(message)
+        
+        a = ''
+        for m in message:
+            a += chr(int(m, 16))
+        print('message is ' + a)
+    else:
+        print('no hash found')
+
+    
+
+
+    # iterate through newer. array must consist of two bytes of zeroes followed by five bytes from a hash of the message and then two more zero bytes
+    # we then must read the remaining bytes of the file until we find the ending buffer, which is the same buffer as above. If we don't find it, encoding is invalid. If we do find it, everything in between the two buffers contains the message. This can now be decoded byte by byte into ascii
+    
+    f = open('rest.txt', 'w')
+    for n in rest:
         f.write(n + ' ')
-
     f.close()
-    
-    print('newer')
-    print(newer)
+
 
 
 def run():
@@ -65,22 +100,20 @@ def half_mac(plaintext):
     plain = bytes(plaintext, 'UTF-8')
     secret = b'secret'
     auth = hmac.new(secret, plain, hashlib.sha256)
-
     hash_head = auth.hexdigest()[0:10]
     c = ''
     for a in range(0, len(hash_head), 2):
-        c += bin(int(hash_head[a:a+2], 16))[2:]
+        
+        c += pad_bits(bin(int(hash_head[a:a+2], 16))[2:])
+    print(c)
     return c
 
 def trans_ascii(ascii):
-    a = ''
-    print('s')
-    for c in ascii:
-        s = pad_bits(str(bin(ord(c))[2:]))
-        print(s)
-        a += s
-    print(a)
-    return a
+    ''' turn an ascii character into its binary string representation '''
+    return ''.join(list(map(lambda x: pad_bits(str(bin(ord(x))[2:])), ascii)))
+    #a = ''
+    #for c in ascii:
+    #    a += pad_bits(str(bin(ord(c))[2:]))
 
 def get_input():
     ''' retrieve the input message '''
@@ -92,43 +125,35 @@ def check_sizes(imgsz, txtsz):
 
 def init_buffers(plaintext):
     ''' initialize buffers for encode/decode processes '''
-    zs = '00000000'
-    print('mac:')
-    h = half_mac(plaintext)
-    x = [list(bth(''.join(h[x:x+8]))) for x in range(0, len(h), 8)]
-    print(x)
-    print(h)
-    
+    zs = '0000000000000000'
     return zs + half_mac(plaintext) + zs
 
 def pad_bits(bits):
     ''' return the binary string padded with zeroes to a multiple of 8 '''
-    return ((8 - (len(bits) % 8)) * '0') + bits
+    if len(bits) % 8 != 0:
+        return ((8 - (len(bits) % 8)) * '0') + bits
+    return bits
 
 def encode(img, b):
-
+    ''' encode message into the image '''
     # get dynamic buffer to demarcate message
     buffers = init_buffers(b)
-
+    #yss = [pad_bits(buffers[x:x+8]) for x in range(0, len(buffers), 8)]
+    #print(yss)
+    #print('buffers')
+    #print(buffers)
     # read in image data
     data = list(img.getdata())
-    pixels = img.load()
-    pixels[0,0] = (0,0,100)
-    print('pixels')
-    print(pixels[0, 0])
-    # initialize final payload wrapped by buffers
     
+    # ready payload for delivery into image
     payload = buffers + trans_ascii(b) + buffers
-    print('payload:')
-    print(payload)
     
-    newer = [bth(''.join(list(payload[x:x+8]))) for x in range(0, len(payload), 8)]
-    print(newer) 
+    # join each byte together and interpret it as hexadecimal
+    newer = [bth(pad_bits(''.join(list(payload[x:x+8])))) for x in range(0, len(payload), 8)]
+    #TODO: remove below after testing
     f = open('tester.txt', 'w')
-
     for n in newer:
         f.write(n + ' ')
-
     f.close()
     
     newT = []
@@ -157,14 +182,13 @@ def encode(img, b):
                     else:
                         newT.append(t-1)
 
-    
     # split new pixel values into 3-tuples
     newPixels = [tuple(newT[i:i+3]) for i in range(0, len(newT) - 2, 3)]
     
     # insert data into beginning of the file
     img.putdata(newPixels)
     
+    # save image as png; saving as jpg will compress and corrupt data
     img.save('encodedfile.png')
-
-#read_img()
-run()
+read_img()
+#run()

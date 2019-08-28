@@ -1,1 +1,5 @@
 -> update check for message length to include its buffers
+-> reconstitute buffer message to locate message
+-> consider allowing users with private keys in order to encrypt/decrypt messages
+
+-> proposed names: HelioFilm
