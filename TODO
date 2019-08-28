@@ -1,5 +1,7 @@
 # Core Tools
 ------------
+-> put script methods into a class
+-> abstract class away from high-level implementation
 -> update regex to match only one search in order to save unnecessary search time
 -> update check for message length to include its buffers
 
