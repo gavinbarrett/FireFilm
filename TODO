@@ -7,7 +7,11 @@
 
 # Frontend
 ----------
--> Develop frontend mockups for FireFilm microservice
+-> develop frontend mockups for FireFilm microservice
+
+# Security Vulnerabilities
+--------------------------
+-> update braces package to a secure version
 
 # Misc.
 -------
