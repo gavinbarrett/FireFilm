@@ -1,0 +1,32 @@
+{
+  "name": "steganograPy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "babel-preset-react-app": "^3.1.2"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "express": "^4.17.1",
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gavinbarrett/steganograPy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gavinbarrett/steganograPy/issues"
+  },
+  "homepage": "https://github.com/gavinbarrett/steganograPy#readme"
+}

@@ -1,1 +1,2 @@
-./miawallace.jpg
+.gitignore
+node_modules/
