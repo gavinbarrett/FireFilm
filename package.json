@@ -1,12 +1,13 @@
 {
-  "name": "steganograPy",
+  "name": "steganograpy",
   "version": "1.0.0",
-  "description": "",
+  "description": "This is a project that allows user to encode images with text via steganography.",
   "main": "index.js",
   "directories": {
     "test": "tests"
   },
   "dependencies": {
+    "babel-preset-react": "^6.24.1",
     "babel-preset-react-app": "^3.1.2"
   },
   "devDependencies": {
@@ -16,7 +17,8 @@
     "react-dom": "^16.9.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
