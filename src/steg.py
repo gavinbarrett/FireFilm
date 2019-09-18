@@ -3,7 +3,12 @@ import re
 import hmac
 import hashlib
 import binascii
+import itertools
 from PIL import Image
+
+def bin_to_hex(binary):
+    ''' turn a binary string into a padded hex string '''
+    return pad_hex(hex(int(binary, 2))[2:])
 
 def pad_hex(b):
     ''' pad a single hex character with a zero '''
@@ -11,13 +16,19 @@ def pad_hex(b):
         return '0' + b
     return b
 
-def bth(binary):
-    ''' turn a binary string into a padded hex string '''
-    return pad_hex(hex(int(binary, 2))[2:])
+def hex_to_bin(hexa):
+    ''' turn each byte of hex into binary '''
+    binary_strings = [pad_bits(bin(int(hexa[x:x+2], 16))[2:])for x in range(0, len(hexa), 2)]
+    return ''.join(binary_strings)
 
-def trans_ascii(ascii):
+def trans_ascii(asc):
     ''' turn an ascii character into its binary string representation '''
-    return ''.join(list(map(lambda x: pad_bits(str(bin(ord(x))[2:])), ascii)))
+    # iterate through the characters and turn them into binary strings
+    return ''.join(list(map(lambda x: pad_bits(str(bin(ord(x))[2:])), asc)))
+
+def zero_padded(n):
+    ''' return true if string is correctly padded with zeros '''
+    return (n[0] == '00' and n[1] == '00' and n[len(n)-2] == '00' and n[len(n)-1] == '00')
 
 def get_input():
     ''' retrieve the input message '''
@@ -25,12 +36,14 @@ def get_input():
 
 def check_sizes(imgsz, txtsz):
     ''' return true if message can be fit inside of image '''
-    return True if txtsz < (imgsz[0] * imgsz[1] * 3) else False
+    #TODO: fix this function; size is not correct
+    # factor in padding and hash
+    return txtsz < (imgsz[0] * imgsz[1] * 3)
 
 def init_buffers(plaintext):
     ''' initialize buffers for encode/decode processes '''
-    zs = '0000000000000000'
-    return zs + half_mac(plaintext) + zs
+    zeros = '0000000000000000'
+    return zeros + half_mac(plaintext) + zeros
 
 def pad_bits(bits):
     ''' return the binary string padded with zeroes to a multiple of 8 '''
@@ -39,62 +52,92 @@ def pad_bits(bits):
     return bits
 
 def half_mac(plaintext):
-    ''' return the first ten bytes of the messages hmac '''
+    ''' return the first ten bytes of the messages' hmac '''
+    # decode the plaintext as UTF-8
     plain = bytes(plaintext, 'UTF-8')
-    secret = os.urandom(16)
+    # generate a random secret to throw into HMAC
+    # this hash functionality is essentially used for matching purposes only;
+    # as such, we shouldn't need to worry too much about the size of the key
+    secret = os.urandom(20)
+    # calculate the hash
     auth = hmac.new(secret, plain, hashlib.sha256)
-    hash_head = auth.hexdigest()[0:10]
-    c = ''
-    for a in range(0, len(hash_head), 2):
-        c += pad_bits(bin(int(hash_head[a:a+2], 16))[2:])
-    return c
+    # save the first ten chars of the hash
+    hash_head = auth.hexdigest()[:10]
+    # return the binary
+    return hex_to_bin(hash_head)
 
-def decode():
-    # load encoded file
-    png = './encodedfile.png'
-    
+def extract_lsb(data):
+    ''' extract the least significant bits from each pixel '''
+    # compress pixel tuples into a single list
+    num_stream = list(itertools.chain(*data))
+    # return the least significant bit of each value for each pixel
+    return ''.join([str(num % 2) for num in num_stream])
+
+def write_to_file(data, payload):
+    ''' overwrite the image data with the payload bits '''
+    newT = []
+    for d in data:
+        for t in d:
+            if payload:
+                p = int(payload[0])
+                payload = payload[1:]
+                # image data is even
+                if t % 2 == 0:
+                    # image data is even
+                    if p % 2 == 0:
+                        # payload data is also even
+                        newT.append(t)
+                        # payload data is odd
+                    else:
+                        if t == 0:
+                            newT.append(t+1)
+
+                        else:
+                            newT.append(t-1)
+
+                # image data is odd
+                else:
+                    if p % 2 == 1:
+                        newT.append(t)
+
+                    else:
+                        newT.append(t-1)
+    return newT
+
+def decode(png):
+    ''' load encoded file '''
     # open image file handle in read mode
     img = Image.open(png, 'r')
 
     # grab data
     data = list(img.getdata())
-    bs = []
-    for d in data:
-        bstr = ''
-        for t in d:
-            bstr += str(t % 2)
-            bs.append(bstr)
-            bstr = ''
-    bs = ''.join(bs)
-    newer = [bth(''.join(list(bs[x:x+8]))) for x in range(0, len(bs)-8, 8)]
-     
+
+    # extract least significant bits
+    ls_bits = extract_lsb(data)
+    
+    # interpret binary data as hexadecimal
+    hexa = [bin_to_hex(''.join(list(ls_bits[x:x+8]))) for x in range(0, len(ls_bits)-8, 8)]
+    
     # read in potential encoding
-    n = newer[0:9]
+    encoding = hexa[:9]
     
     # if zero padding exists in the first nine bytes, consider the text between as the hash digest
-    if (n[0] == '00' and n[1] == '00' and n[len(n)-2] == '00' and n[len(n)-1] == '00'):
+    if zero_padded(encoding):
         # grab potential message digest
-        digest = ''.join(n[2:7])
-        print('Digest: ' + digest)
-    
+        digest = ''.join(encoding[2:7])
         # save the rest of the file info
-        rest = ''.join(newer[9:len(newer)])
-        
+        rest = ''.join(hexa[9:len(hexa)])
         # search the remainder of the file for the end buffer
         x = re.search(digest, rest)
-
         # save the string between the start and end buffers
         hex_message = rest[0:x.start()-4]
-
         # reinterpret string as hex strings
         hex_message = [hex_message[i:i+2] for i in range(0, len(hex_message), 2)]
-
         # reinterpret hex strings as ascii characters
         ascii_message = ''.join(list(map(lambda x: chr(int(x, 16)), hex_message)))
-        print('\nmessage is:')
-        print(ascii_message)
+        print('The file reads: "' + ascii_message + '".')
     else:
-        print('no hash found')
+        print('No message found.')
 
 def encode(img, b):
     ''' encode message into the image '''
@@ -108,33 +151,10 @@ def encode(img, b):
     payload = buffers + trans_ascii(b) + buffers
     
     # join each byte together and interpret it as hexadecimal
-    newer = [bth(pad_bits(''.join(list(payload[x:x+8])))) for x in range(0, len(payload), 8)]
+    newer = [bin_to_hex(pad_bits(''.join(list(payload[x:x+8])))) for x in range(0, len(payload), 8)]
     
-    newT = []
-    for d in data:
-        for t in d:
-            if payload:
-                p = int(payload[0])
-                payload = payload[1:]
-                
-                # image data is even
-                if t % 2 == 0:
-                    # image data is even
-                    if p % 2 == 0:
-                        # payload data is also even
-                        newT.append(t)
-                        # payload data is odd
-                    else:
-                        if t == 0:
-                            newT.append(t+1)
-                        else:
-                            newT.append(t-1)
-                # image data is odd
-                else:
-                    if p % 2 == 1:
-                        newT.append(t)
-                    else:
-                        newT.append(t-1)
+    # write encoded message out to the file
+    newT = write_to_file(data, payload)
 
     # split new pixel values into 3-tuples
     newPixels = [tuple(newT[i:i+3]) for i in range(0, len(newT) - 2, 3)]
