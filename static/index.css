@@ -3,3 +3,9 @@ html {
 	height: 100vh;
 	background: coral;
 }
+
+#page {
+	width: 100vw;
+	height: 100vh;
+	background-color: red;
+}
