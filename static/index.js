@@ -1,63 +1,32 @@
-function Selector() {
-	return React.createElement(
-		React.Fragment,
-		null,
-		React.createElement(
-			"div",
-			{ id: "selectWrapper" },
-			React.createElement(
-				"div",
-				null,
-				React.createElement("input", { id: "f", type: "file" })
-			),
-			React.createElement(
-				"div",
-				null,
-				React.createElement(
-					"button",
-					{ className: "file-submit", onClick: uploadFile },
-					"Submit File"
-				)
-			)
-		)
-	);
+class Selector extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			filepath: undefined
+		};
+	}
+	componentDidMount() {
+		console.log('Mounted');
+	}
+	updateFile(file) {
+		this.setState({ filepath: file });
+	}
+	uploadFile(file) {
+		console.log(file);
+
+		//let fd = new FormData();
+
+		//fd.append('upFile', e);
+
+		//fetch('/upload', {method: 'POST', body: fd});
+	}
+	render() {
+		return React.createElement(React.Fragment, null, React.createElement("div", { id: "selectWrapper" }, React.createElement("input", { id: "inf", type: "file", name: "file", accept: "image/x-png,image/gif,image/jpeg", onChange: event => updateFile(event.target.files[0]) }), React.createElement("button", { id: "f", type: "submit", className: "file-submit", onClick: uploadFile(this.state.filepath) }, "Submit File"), "/* upload an image to the server */ //let e = document.getElementById('inf'); //console.log(e); //let filename = e.value.split(\"\\\\\").reverse()[0];"));
+	}
 }
 
 function Page() {
-	return React.createElement(
-		React.Fragment,
-		null,
-		React.createElement(
-			"div",
-			{ id: "page" },
-			React.createElement(
-				"p",
-				null,
-				"Hello"
-			),
-			React.createElement(Selector, null)
-		)
-	);
-}
-
-function uploadFile() {
-	/* upload an image to the server */
-	let e = document.getElementById('f').value;
-	let filename = e.split("\\").reverse()[0];
-
-	let xhr = openRequest('POST', 'upload');
-	let fd = new FormData();
-
-	xhr.onload = () => {
-		console.log("Returned from AJAX");
-		let ob = JSON.parse(xhr.responseText);
-		console.log(ob);
-		alert(ob['hey']);
-	};
-
-	fd.append('upFile', filename);
-
-	xhr.send(fd);
+	return React.createElement(React.Fragment, null, React.createElement("div", { id: "page" }, React.createElement("p", null, "Hello"), React.createElement(Selector, null)));
 }
 
 function openRequest(method, url) {

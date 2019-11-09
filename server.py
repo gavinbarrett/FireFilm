@@ -7,8 +7,10 @@ app = Flask(__name__)
 def encode_image():
     # TODO make sure we are receiving the actual image file
     # be sure to return the .png files after processing
-    print(request.form['upFile'])
-    print(type(request.form['upFile']))
+    print('Made it to the server')
+    print(request.files)
+    #print(request.files['a'])
+    #print(type(request.files['a']))
     a = {"hey" : "yo"}
     return jsonify(a)
 

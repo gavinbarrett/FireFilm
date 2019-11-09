@@ -8,23 +8,17 @@ from PIL import Image
 
 def bin_to_hex(binary):
     ''' turn a binary string into a padded hex string '''
-    return pad_hex(hex(int(binary, 2))[2:])
-
-def pad_hex(b):
-    ''' pad a single hex character with a zero '''
-    if len(b) == 1:
-        return '0' + b
-    return b
+    return format(int(binary, 2),'02x')
 
 def hex_to_bin(hexa):
     ''' turn each byte of hex into binary '''
-    binary_strings = [pad_bits(bin(int(hexa[x:x+2], 16))[2:])for x in range(0, len(hexa), 2)]
+    binary_strings = [str(format(int(hexa[x:x+2], 16),'08b'))for x in range(0, len(hexa), 2)]
     return ''.join(binary_strings)
 
 def trans_ascii(asc):
     ''' turn an ascii character into its binary string representation '''
     # iterate through the characters and turn them into binary strings
-    return ''.join(list(map(lambda x: pad_bits(str(bin(ord(x))[2:])), asc)))
+    return ''.join(list(map(lambda x: str(format(ord(x),'08b')), asc)))
 
 def zero_padded(n):
     ''' return true if string is correctly padded with zeros '''
@@ -36,20 +30,13 @@ def get_input():
 
 def check_sizes(imgsz, txtsz):
     ''' return true if message can be fit inside of image '''
-    #TODO: fix this function; size is not correct
-    # factor in padding and hash
-    return txtsz < (imgsz[0] * imgsz[1] * 3)
+    # check if message plus 140 bits of padding can fit
+    return (txtsz + 140) < (imgsz[0] * imgsz[1] * 3)
 
 def init_buffers(plaintext):
     ''' initialize buffers for encode/decode processes '''
     zeros = '0000000000000000'
     return zeros + half_mac(plaintext) + zeros
-
-def pad_bits(bits):
-    ''' return the binary string padded with zeroes to a multiple of 8 '''
-    if len(bits) % 8 != 0:
-        return ((8 - (len(bits) % 8)) * '0') + bits
-    return bits
 
 def half_mac(plaintext):
     ''' return the first ten bytes of the messages' hmac '''
@@ -81,27 +68,16 @@ def write_to_file(data, payload):
             if payload:
                 p = int(payload[0])
                 payload = payload[1:]
-                # image data is even
+                # if image data is even
                 if t % 2 == 0:
-                    # image data is even
                     if p % 2 == 0:
                         # payload data is also even
                         newT.append(t)
-                        # payload data is odd
                     else:
-                        if t == 0:
-                            newT.append(t+1)
-
-                        else:
-                            newT.append(t-1)
-
-                # image data is odd
+                        newT.append(t+1) if not t else newT.append(t-1)
+                # else if image data is odd
                 else:
-                    if p % 2 == 1:
-                        newT.append(t)
-
-                    else:
-                        newT.append(t-1)
+                    newT.append(t) if p % 2 else newT.append(t-1)
     return newT
 
 def decode(png):
@@ -149,9 +125,8 @@ def encode(img, b):
     
     # ready payload for delivery into image
     payload = buffers + trans_ascii(b) + buffers
-    
     # join each byte together and interpret it as hexadecimal
-    newer = [bin_to_hex(pad_bits(''.join(list(payload[x:x+8])))) for x in range(0, len(payload), 8)]
+    newer = [bin_to_hex(''.join(list(payload[x:x+8]))) for x in range(0, len(payload), 8)]
     
     # write encoded message out to the file
     newT = write_to_file(data, payload)
