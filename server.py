@@ -6,11 +6,9 @@ app = Flask(__name__)
 
 @app.route('/upload', methods=['POST'])
 def encode_image():
-	# TODO make sure we are receiving the actual image file
-	# be sure to return the .png files after processing
-	print('Made it to the server')
 	f = open("newfile.png", "wb")
 	r = request.files['file']
+	# read the image binary
 	data = r.read()
 	print(data)
 	f.write(data)
