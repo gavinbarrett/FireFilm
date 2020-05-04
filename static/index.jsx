@@ -2,34 +2,30 @@ class Selector extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			filepath: undefined,
+			filepath: null,
 		};
 	}
 	componentDidMount() {
-		console.log('Mounted');
 	}
-	updateFile = (file) => {
-		this.setState({ filepath: file });
+	updateFile = event => {
+		// update the filepath
+		this.setState({ filepath: event.target.files[0] });
 	}
-	uploadFile = (file) => {
-		console.log(file);
-	
-		//let fd = new FormData();
-	
-		//fd.append('upFile', e);
-	
-		//fetch('/upload', {method: 'POST', body: fd});
+	uploadFile = () => {
+		// send image with POST request
+		console.log("Current file: " + this.state.filepath.name);
+		
+		let imgData = new FormData();
+		imgData.append("file", this.state.filepath, this.state.filepath.name);
+		//imgData.append("file", this.state.filepath, "error.png");
+		fetch('/upload', { method: "POST", body: imgData })
+			.then(response => console.log(response));
 	}
 	render() {
 	  return(
 	  <div id="selectWrapper">
-	  <input id="inf" type="file" name="file" accept="image/x-png,image/gif,image/jpeg" onChange={(event) => this.updateFile(event.target.files[0])}/>
-	  <button id="f" type="submit" className="file-submit" onClick={this.uploadFile(this.state.filepath)}>Submit File</button>
-	/* upload an image to the server */
-	//let e = document.getElementById('inf');
-	//console.log(e);
-	
-	//let filename = e.value.split("\\").reverse()[0];
+	  <input id="inf" type="file" name="file" accept="image/x-png,image/gif,image/jpeg" onChange={this.updateFile}/>
+	  <button id="f" type="submit" className="file-submit" onClick={() => { this.uploadFile() }}>Submit File</button>
 	  </div>);
 	}
 }
@@ -37,18 +33,9 @@ class Selector extends React.Component {
 function Page() {
 	return(<React.Fragment>
 	<div id="page">
-	<p>Hello</p>
 	<Selector />
 	</div>
 	</React.Fragment>);
-}
-
-
-function openRequest(method, url) {
-	/* open a request object for AJAX */
-	let xhr = new XMLHttpRequest();
-	xhr.open(method, url, true);
-	return xhr;
 }
 
 ReactDOM.render(<Page />, document.getElementById('root'));
