@@ -5,7 +5,27 @@ html {
 }
 
 #page {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 	width: 100vw;
 	height: 100vh;
 	background-color: red;
+}
+
+#heading {
+	display: flex;
+	vertical-align: middle;
+	justify-content: center;
+	font-family: "Inconsolata";
+	font-size: 22vw;
+	width: 100vw;
+	height: 100vh;
+	color: white;
+}
+
+#img {
+	background-color: black;
+	display: inline-block;
 }

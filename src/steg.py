@@ -2,8 +2,8 @@ import os
 import re
 import hmac
 import hashlib
-import binascii
-import itertools
+from io import BytesIO
+from itertools import chain
 from PIL import Image
 
 def bin_to_hex(binary):
@@ -56,29 +56,9 @@ def half_mac(plaintext):
 def extract_lsb(data):
     ''' extract the least significant bits from each pixel '''
     # compress pixel tuples into a single list
-    num_stream = list(itertools.chain(*data))
+    num_stream = list(chain(*data))
     # return the least significant bit of each value for each pixel
     return ''.join([str(num % 2) for num in num_stream])
-
-def write_to_file(data, payload):
-    ''' overwrite the image data with the payload bits '''
-    newT = []
-    for d in data:
-        for t in d:
-            if payload:
-                p = int(payload[0])
-                payload = payload[1:]
-                # if image data is even
-                if t % 2 == 0:
-                    if p % 2 == 0:
-                        # payload data is also even
-                        newT.append(t)
-                    else:
-                        newT.append(t+1) if not t else newT.append(t-1)
-                # else if image data is odd
-                else:
-                    newT.append(t) if p % 2 else newT.append(t-1)
-    return newT
 
 def decode(png):
     ''' load encoded file '''
@@ -115,40 +95,42 @@ def decode(png):
     else:
         print('No message found.')
 
-def encode(img, b):
-    ''' encode message into the image '''
-    # get dynamic buffer to demarcate message
-    buffers = init_buffers(b)
-    
-    # read in image data
-    data = list(img.getdata())
-    
-    # ready payload for delivery into image
-    payload = buffers + trans_ascii(b) + buffers
-    # join each byte together and interpret it as hexadecimal
-    newer = [bin_to_hex(''.join(list(payload[x:x+8]))) for x in range(0, len(payload), 8)]
-    
-    # write encoded message out to the file
-    newT = write_to_file(data, payload)
+def stegraph(data, payload):
+	bytestring = BytesIO()
+	for d in data:
+		if payload:
+			p = int(payload[0])		
+			payload = payload[1:]
+			if d % 2 == 0:
+				if p % 2 == 0:
+					bytestring.write(bytes([d]))
+				else:
+					bytestring.write(bytes([d+1])) if not d else bytestring.write(bytes([d-1]))
+			else:
+				bytestring.write(bytes([d])) if p % 2 else bytestring.write(bytes([d-1]))
+		else:
+			bytestring.write(bytes([d]))
+	bytestring.seek(0)
+	return bytestring.read()
 
-    # split new pixel values into 3-tuples
-    newPixels = [tuple(newT[i:i+3]) for i in range(0, len(newT) - 2, 3)]
-    
-    # insert data into beginning of the file
-    img.putdata(newPixels)
-    
-    # save image as png; saving as jpg will compress and corrupt data
-    img.save('./encodedfile.png')
-
-def init_encoding(jpg):
-    # open the image with PIL
-    img = Image.open(jpg, 'r')
-
-    a = get_input()
-
-    if(check_sizes(img.size, len(a)*8)):
-        print('message can fit')
-        newImg = img.copy()
-        encode(newImg, a)
-    else:
-        print("message cannot fit")
+def encode(data, msg):
+	''' encode message into the image '''
+	# get dynamic buffer to demarcate message
+	buffers = init_buffers(msg)
+	# ready payload for delivery into image
+	payload = buffers + trans_ascii(msg) + buffers
+	# load the binary bata as a PIL Image
+	img = Image.open(BytesIO(data), 'r')
+	# extract RGBA pixel data of the image
+	pixels = list(img.getdata())
+	# transform pixel data into a 1-D array
+	pix_d = list(chain(*pixels))
+	# encode the image with msg
+	new_img = stegraph(pix_d, payload)
+	# save the encoded pixel data into an Image object
+	im = Image.frombytes('RGBA', img.size, new_img)
+	# save image 
+	out = BytesIO()
+	im.save(out, format="PNG")
+	# return the binary of the encoded image
+	return out.getvalue()
