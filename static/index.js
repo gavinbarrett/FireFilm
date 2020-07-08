@@ -3140,19 +3140,25 @@ function (_React$Component) {
         filepath: event.target.files[0]
       });
     });
+    (0, _defineProperty2["default"])((0, _assertThisInitialized2["default"])(_this), "updateDecode", function (event) {
+      // update the filepath
+      _this.setState({
+        decodepath: event.target.files[0]
+      });
+    });
     (0, _defineProperty2["default"])((0, _assertThisInitialized2["default"])(_this), "awaitResponse",
     /*#__PURE__*/
     function () {
       var _ref = (0, _asyncToGenerator2["default"])(
       /*#__PURE__*/
-      _regenerator["default"].mark(function _callee(imgData) {
+      _regenerator["default"].mark(function _callee(imgData, path) {
         var resp;
         return _regenerator["default"].wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return fetch('/upload', {
+                return fetch(path, {
                   method: "POST",
                   body: imgData
                 });
@@ -3173,17 +3179,32 @@ function (_React$Component) {
         }, _callee);
       }));
 
-      return function (_x) {
+      return function (_x, _x2) {
         return _ref.apply(this, arguments);
       };
     }());
+    (0, _defineProperty2["default"])((0, _assertThisInitialized2["default"])(_this), "clicked", function () {
+      newst(function (n) {
+        return 'green';
+      });
+    });
+    (0, _defineProperty2["default"])((0, _assertThisInitialized2["default"])(_this), "startDownload", function (str, filename) {
+      var dl_element = document.createElement('a');
+      console.log("str: " + str);
+      dl_element.setAttribute('href', str);
+      dl_element.setAttribute('download', filename);
+      dl_element.style.display = 'none';
+      document.body.appendChild(dl_element);
+      dl_element.click();
+      document.body.removeChild(dl_element);
+    });
     (0, _defineProperty2["default"])((0, _assertThisInitialized2["default"])(_this), "uploadFile", function () {
       /* send image with POST request */
       var imgData = new FormData(); // append append file to the FormData
 
       imgData.append("file", _this.state.filepath, _this.state.filepath.name); // send AJAX POST request to server
 
-      _this.awaitResponse(imgData).then(function (response) {
+      _this.awaitResponse(imgData, '/upload').then(function (response) {
         console.log("Server responded");
         var str = response['enc'];
         var canvas = document.getElementById("img");
@@ -3203,10 +3224,25 @@ function (_React$Component) {
 
 
         encoded.setAttribute("src", str);
+
+        _this.startDownload(str, 'newm.png');
+      });
+    });
+    (0, _defineProperty2["default"])((0, _assertThisInitialized2["default"])(_this), "uploadDecode", function () {
+      /* send image with POST request */
+      var imgData = new FormData(); // append append file to the FormData
+
+      imgData.append("decodefile", _this.state.decodepath, _this.state.decodepath.name); // send AJAX POST request to server
+
+      _this.awaitResponse(imgData, '/decode').then(function (response) {
+        console.log("Server responded");
+        var str = response['decoded'];
+        console.log(atob(str));
       });
     });
     _this.state = {
-      filepath: null
+      filepath: null,
+      decodepath: null
     };
     return _this;
   }
@@ -3220,6 +3256,8 @@ function (_React$Component) {
       var _this2 = this;
 
       return (
+        /*#__PURE__*/
+        _react["default"].createElement(_react["default"].Fragment, null,
         /*#__PURE__*/
         _react["default"].createElement("div", {
           id: "selectWrapper"
@@ -3240,7 +3278,28 @@ function (_React$Component) {
           onClick: function onClick() {
             _this2.uploadFile();
           }
-        }, "Submit File"))
+        }, "Submit File")),
+        /*#__PURE__*/
+        _react["default"].createElement("div", {
+          id: "selectWrapper2"
+        },
+        /*#__PURE__*/
+        _react["default"].createElement("input", {
+          id: "inf2",
+          type: "file",
+          name: "file",
+          accept: "image/x-png,image/gif,image/jpeg",
+          onChange: this.updateDecode
+        }),
+        /*#__PURE__*/
+        _react["default"].createElement("button", {
+          id: "f2",
+          type: "submit",
+          className: "file-submit",
+          onClick: function onClick() {
+            _this2.uploadDecode();
+          }
+        }, "Decode File")))
       );
     }
   }]);
