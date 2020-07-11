@@ -1,39 +1,62 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import ReactDOM from 'react-dom';
 import Dropzone from 'react-dropzone';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import { useDropzone } from 'react-dropzone';
+import {useDropzone} from 'react-dropzone';
 import ajax from 'superagent';
 
 const fs = require('fs');
 const crypto = require('crypto');
 
-function Selector() {
-	
-	const [filepath, changeFile] = useState(null);
-	const [decfilepath, changeDecFile] = useState(null);
-	const [message, changeMessage] = useState('');
+class Selector extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			filepath: null,
+			decodepath: null,
+			value: '',
+		};
+	}
+/* const [filepath, changeFile] = useState(null);
 
-	const updateFile = event => {
+	updateFile = event => {
 		// update the filepath
+		changeState(prevState => {
+			return {
+				...prevState,
+				filepath: event.target.files[0]
+			}
+		});
 	}
 
-	const updateMessage = async message => {
-		// retrieve the input value
-		let x = document.getElementById("message").value;
-		// change state to the new value
-		await changeMessage(x);
+	updateDecode = event => {
+		// update the filepath
+		changeState(prevState => {
+			return {
+				...prevState,
+				decodepath: event.target.files[0]
+			}
+		});
 	}
-	
-	const awaitResponse = async (path) => {
+
+	updateMessage = message => {
+		let x = document.getElementById("message").value;
+		changeState(prevState => {
+			return {
+				...prevState,
+				message: x
+			}
+		});
+	}
+*/
+	awaitResponse = async (path) => {
+		alert(this.state.filepath);
 		let formData = new FormData();
-		formData.append('file', filepath);
-		formData.append('message', message);
+		formData.append('file', this.state.filepath);
 		const resp = await fetch(path, { method: "POST", body: formData });
 		return await resp.json();
 	}
 
-	const startDownload = (str, filename) => {
+	startDownload = (str, filename) => {
 		let dl_elem = document.createElement('a');
 		dl_elem.setAttribute('href', str);
 		dl_elem.setAttribute('download', filename);
@@ -43,62 +66,54 @@ function Selector() {
 		document.body.removeChild(dl_elem);
 	}
 
-	const getFileHash = (str) => {
+	getFileHash = (str) => {
 		let b64str = str.slice(22, str.length);
 		let x = atob(b64str);
 		const st = new Uint8Array(x);
-		console.log(st);
 		let hash = crypto.createHash('sha256')
 			.update(st)
 			.digest('hex');
 		return hash + '.png';
 	}
 
-	const uploadFile = async () => {
+	uploadFile = async () => {
 		/* send image with POST request */
-		await awaitResponse('/upload')
+		await this.awaitResponse('/upload')
 			.then(response => {
 			let str = response['enc'];
-			console.log(str);
 			if (str == "None")
 				return;
 			//let canvas = document.getElementById("img");
 			//let context = canvas.getContext('2d')
-			let fp = getFileHash(str);
-			startDownload(str, fp);
+			let fp = this.getFileHash(str);
+			this.startDownload(str, fp);
 		});
 	}
 
-	const uploadDecode = async () => {
+	uploadDecode = async () => {
 		/* send image with POST request */		
 		let imgData = new FormData();
 		// append append file to the FormData
 		imgData.append("file", state.decodepath);
 		// send AJAX POST request to server
-		await awaitResponse(imgData, '/decode')
+		await this.awaitResponse(imgData, '/decode')
 			.then(response => {
 			let str = response['decoded'];
 			console.log(atob(str));
 		});
 	}
 
-	const onDrop = async file => {
-		// FIXME: if encode flag is set, call updateFile
-		// else call updateDecodeFile
+	onDrop = async file => {
 		console.log('calling onDrop');
 		console.log(file[0]);
-		await changeFile(file[0]);
+		await this.setState({ filepath: file[0] });
 	};
 
+	render() {
 	return(
 	<React.Fragment>
-	<Tabs>
-	<TabList>
-	<Tab>Encode</Tab>
-	<Tab>Decode</Tab>
-	</TabList>
 	<div id="dropdiv">
-	<Dropzone id="dropping" accept="image/*" onDrop={file => onDrop(file)}>
+	<Dropzone id="dropping" accept="image/*" onDrop={file => this.onDrop(file)}>
  		{({getRootProps, getInputProps, isDragActive}) => (
     	<div id="dropper" {...getRootProps()}>
       	<input type="file" {...getInputProps()} />
@@ -107,20 +122,16 @@ function Selector() {
   	)}
 	 </Dropzone>
 	 </div>
-	 <TabPanel>
 	 <div id="selectWrapper">
-	 <input id="message" type="text" onChange={() => updateMessage()}/>
-	 <button id="f" type="submit" className="file-submit" onClick={() => uploadFile()}>Submit File</button>
+	 <input id="message" type="text" onChange={() => this.updateMessage()}/>
+	 <button id="f" type="submit" className="file-submit" onClick={() => this.uploadFile()}>Submit File</button>
 	 </div>
-	 </TabPanel>
-	 <TabPanel>
 	 <div id="selectWrapper2">
-	 <input id="inf2" type="file" name="file" accept="image/x-png,image/gif,image/jpeg" onChange={(e) => updateDecode(e)}/>
-	 <button id="f2" type="submit" className="file-submit" onClick={() => uploadDecode()}>Decode File</button>
+	 <input id="inf2" type="file" name="file" accept="image/x-png,image/gif,image/jpeg" onChange={(e) => this.updateDecode(e)}/>
+	 <button id="f2" type="submit" className="file-submit" onClick={() => this.uploadDecode()}>Decode File</button>
 	 </div>
-	 </TabPanel>
-	 </Tabs>
 	</React.Fragment>);
+	}
 }
 
 function Heading() {

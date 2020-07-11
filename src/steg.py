@@ -133,7 +133,9 @@ def encode(data, msg):
 	new_img = write_to_file(pixels, payload)
 
 	newer = [bin_to_hex(''.join(list(payload[x:x+8]))) for x in range(0, len(payload), 8)]
+	print(img.mode)
 	new_pix = pixelize(new_img, 4) if img.mode == 'RGBA' else pixelize(new_img)
+	print(new_pix[:10])
 	img.putdata(new_pix)
 
 	out = BytesIO()

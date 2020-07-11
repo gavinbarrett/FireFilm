@@ -4,6 +4,24 @@ html {
 	background: orange;
 }
 
+#dropdiv {
+	display: flex;
+	width: 70%;
+	height: 20%;
+	justify-content: center;
+	align-items: center;
+	background-color: white;
+	border-radius: 5px;
+}
+
+#dropper {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	justify-content: center;
+	align-items: center;
+}
+
 #page {
 	display: flex;
 	flex-direction: column;
@@ -16,16 +34,22 @@ html {
 
 #heading {
 	display: flex;
-	vertical-align: middle;
 	justify-content: center;
-	font-family: "Inconsolata";
-	font-size: 22vw;
+	font-family: 'Pacifico';
+	font-size: 18vw;
 	width: 100vw;
-	height: 100vh;
+	height: 50vh;
 	color: white;
 }
 
 #img {
 	background-color: black;
 	display: inline-block;
+}
+
+.react-tabs {
+	background-color: white;
+	border-radius: 5px;
+	width: 50vw;
+	height: 50vh;
 }
