@@ -1,13 +1,19 @@
 html {
 	width: 100vw;
-	height: 100vh;
-	background: orange;
+	height: 110vh;
+	background: red;
+	position: absolute;
+	margin: 0px;
+	top: 0px;
+	bottom: 0px;
+	overflow: hidden;
 }
 
 #dropdiv {
 	display: flex;
+	flex-direction: column;
 	width: 70%;
-	height: 20%;
+	height: 80%;
 	justify-content: center;
 	align-items: center;
 	background-color: white;
@@ -20,6 +26,18 @@ html {
 	height: 100%;
 	justify-content: center;
 	align-items: center;
+	border-width: 1px;
+	border-style: solid;
+	border-color: grey;
+	border-radius: 5px;
+}
+
+#dropwrapper {
+	display: flex;
+	height: 100%;
+	width: 100%;
+	justify-content: center;
+	align-items: center;
 }
 
 #page {
@@ -28,18 +46,29 @@ html {
 	justify-content: center;
 	align-items: center;
 	width: 100vw;
-	height: 100vh;
+	height: 110vh;
 	background-color: red;
 }
 
 #heading {
 	display: flex;
 	justify-content: center;
+	top: 0px;
 	font-family: 'Pacifico';
 	font-size: 18vw;
 	width: 100vw;
-	height: 50vh;
+	height: 40vh;
 	color: white;
+	position: relative;
+}
+
+#selectorWrapper {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100vw;
+	height: 60vh;
+	position: relative;
 }
 
 #img {
@@ -48,8 +77,11 @@ html {
 }
 
 .react-tabs {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
 	background-color: white;
 	border-radius: 5px;
 	width: 50vw;
-	height: 50vh;
+	height: 40vh;
 }

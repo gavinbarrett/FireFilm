@@ -34142,8 +34142,10 @@ function Selector() {
       message = _useState6[0],
       changeMessage = _useState6[1];
 
-  var updateFile = function updateFile(event) {// update the filepath
-  };
+  var _useState7 = (0, _react.useState)(0),
+      _useState8 = (0, _slicedToArray2["default"])(_useState7, 2),
+      key = _useState8[0],
+      setKey = _useState8[1];
 
   var updateMessage =
   /*#__PURE__*/
@@ -34157,7 +34159,7 @@ function Selector() {
           switch (_context.prev = _context.next) {
             case 0:
               // retrieve the input value
-              x = document.getElementById("message").value; // change state to the new value
+              x = document.getElementById("message").value; // change state to the new message value
 
               _context.next = 3;
               return changeMessage(x);
@@ -34175,7 +34177,7 @@ function Selector() {
     };
   }();
 
-  var awaitResponse =
+  var awaitEncode =
   /*#__PURE__*/
   function () {
     var _ref2 = (0, _asyncToGenerator2["default"])(
@@ -34186,9 +34188,12 @@ function Selector() {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
-              formData = new FormData();
-              formData.append('file', filepath);
-              formData.append('message', message);
+              formData = new FormData(); // append the image file
+
+              formData.append('file', filepath); // append the secret message
+
+              formData.append('message', message); // retrieve the encoded image
+
               _context2.next = 5;
               return fetch(path, {
                 method: "POST",
@@ -34211,8 +34216,50 @@ function Selector() {
       }, _callee2);
     }));
 
-    return function awaitResponse(_x2) {
+    return function awaitEncode(_x2) {
       return _ref2.apply(this, arguments);
+    };
+  }();
+
+  var awaitDecode =
+  /*#__PURE__*/
+  function () {
+    var _ref3 = (0, _asyncToGenerator2["default"])(
+    /*#__PURE__*/
+    _regenerator["default"].mark(function _callee3(path) {
+      var formData, resp;
+      return _regenerator["default"].wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              formData = new FormData(); // append the encoded file
+
+              formData.append('decfile', decfilepath); // retrieve the decoded message
+
+              _context3.next = 4;
+              return fetch(path, {
+                method: "POST",
+                body: formData
+              });
+
+            case 4:
+              resp = _context3.sent;
+              _context3.next = 7;
+              return resp.json();
+
+            case 7:
+              return _context3.abrupt("return", _context3.sent);
+
+            case 8:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3);
+    }));
+
+    return function awaitDecode(_x3) {
+      return _ref3.apply(this, arguments);
     };
   }();
 
@@ -34238,60 +34285,25 @@ function Selector() {
   var uploadFile =
   /*#__PURE__*/
   function () {
-    var _ref3 = (0, _asyncToGenerator2["default"])(
-    /*#__PURE__*/
-    _regenerator["default"].mark(function _callee3() {
-      return _regenerator["default"].wrap(function _callee3$(_context3) {
-        while (1) {
-          switch (_context3.prev = _context3.next) {
-            case 0:
-              _context3.next = 2;
-              return awaitResponse('/upload').then(function (response) {
-                var str = response['enc'];
-                console.log(str);
-                if (str == "None") return; //let canvas = document.getElementById("img");
-                //let context = canvas.getContext('2d')
-
-                var fp = getFileHash(str);
-                startDownload(str, fp);
-              });
-
-            case 2:
-            case "end":
-              return _context3.stop();
-          }
-        }
-      }, _callee3);
-    }));
-
-    return function uploadFile() {
-      return _ref3.apply(this, arguments);
-    };
-  }();
-
-  var uploadDecode =
-  /*#__PURE__*/
-  function () {
     var _ref4 = (0, _asyncToGenerator2["default"])(
     /*#__PURE__*/
     _regenerator["default"].mark(function _callee4() {
-      var imgData;
       return _regenerator["default"].wrap(function _callee4$(_context4) {
         while (1) {
           switch (_context4.prev = _context4.next) {
             case 0:
-              /* send image with POST request */
-              imgData = new FormData(); // append append file to the FormData
+              _context4.next = 2;
+              return awaitEncode('/upload').then(function (response) {
+                var str = response['enc'];
+                console.log(str);
+                if (str == "None") return; // get the sha256 hash on the file
 
-              imgData.append("file", state.decodepath); // send AJAX POST request to server
+                var fp = getFileHash(str); // begin download of encoded file
 
-              _context4.next = 4;
-              return awaitResponse(imgData, '/decode').then(function (response) {
-                var str = response['decoded'];
-                console.log(atob(str));
+                startDownload(str, fp);
               });
 
-            case 4:
+            case 2:
             case "end":
               return _context4.stop();
           }
@@ -34299,29 +34311,37 @@ function Selector() {
       }, _callee4);
     }));
 
-    return function uploadDecode() {
+    return function uploadFile() {
       return _ref4.apply(this, arguments);
     };
   }();
 
-  var _onDrop =
+  var uploadDecode =
   /*#__PURE__*/
   function () {
     var _ref5 = (0, _asyncToGenerator2["default"])(
     /*#__PURE__*/
-    _regenerator["default"].mark(function _callee5(file) {
+    _regenerator["default"].mark(function _callee5() {
+      var imgData;
       return _regenerator["default"].wrap(function _callee5$(_context5) {
         while (1) {
           switch (_context5.prev = _context5.next) {
             case 0:
-              // FIXME: if encode flag is set, call updateFile
-              // else call updateDecodeFile
-              console.log('calling onDrop');
-              console.log(file[0]);
-              _context5.next = 4;
-              return changeFile(file[0]);
+              /* send image with POST request */
+              imgData = new FormData();
+              console.log('decfile');
+              console.log(decfilepath); // append append file to the FormData
 
-            case 4:
+              imgData.append("decfile", decfilepath); // send AJAX POST request to server
+
+              _context5.next = 6;
+              return awaitDecode('/decode').then(function (response) {
+                console.log(response);
+                var str = response['decoded'];
+                console.log(atob(str));
+              });
+
+            case 6:
             case "end":
               return _context5.stop();
           }
@@ -34329,8 +34349,53 @@ function Selector() {
       }, _callee5);
     }));
 
-    return function onDrop(_x3) {
+    return function uploadDecode() {
       return _ref5.apply(this, arguments);
+    };
+  }();
+
+  var _onDrop =
+  /*#__PURE__*/
+  function () {
+    var _ref6 = (0, _asyncToGenerator2["default"])(
+    /*#__PURE__*/
+    _regenerator["default"].mark(function _callee6(file) {
+      return _regenerator["default"].wrap(function _callee6$(_context6) {
+        while (1) {
+          switch (_context6.prev = _context6.next) {
+            case 0:
+              // else call updateDecodeFile
+              // encode tab is selected
+              console.log('calling onDrop');
+              console.log(file[0]);
+              console.log("Key: " + key);
+
+              if (key) {
+                _context6.next = 8;
+                break;
+              }
+
+              _context6.next = 6;
+              return changeFile(file[0]);
+
+            case 6:
+              _context6.next = 10;
+              break;
+
+            case 8:
+              _context6.next = 10;
+              return changeDecFile(file[0]);
+
+            case 10:
+            case "end":
+              return _context6.stop();
+          }
+        }
+      }, _callee6);
+    }));
+
+    return function onDrop(_x4) {
+      return _ref6.apply(this, arguments);
     };
   }();
 
@@ -34338,13 +34403,25 @@ function Selector() {
     /*#__PURE__*/
     _react["default"].createElement(_react["default"].Fragment, null,
     /*#__PURE__*/
-    _react["default"].createElement(_reactTabs.Tabs, null,
+    _react["default"].createElement("div", {
+      id: "selectorWrapper"
+    },
+    /*#__PURE__*/
+    _react["default"].createElement(_reactTabs.Tabs, {
+      onSelect: function onSelect(k) {
+        return setKey(k);
+      }
+    },
     /*#__PURE__*/
     _react["default"].createElement(_reactTabs.TabList, null,
     /*#__PURE__*/
     _react["default"].createElement(_reactTabs.Tab, null, "Encode"),
     /*#__PURE__*/
     _react["default"].createElement(_reactTabs.Tab, null, "Decode")),
+    /*#__PURE__*/
+    _react["default"].createElement("div", {
+      id: "dropwrapper"
+    },
     /*#__PURE__*/
     _react["default"].createElement("div", {
       id: "dropdiv"
@@ -34356,10 +34433,12 @@ function Selector() {
       onDrop: function onDrop(file) {
         return _onDrop(file);
       }
-    }, function (_ref6) {
-      var getRootProps = _ref6.getRootProps,
-          getInputProps = _ref6.getInputProps,
-          isDragActive = _ref6.isDragActive;
+    }, function (_ref7) {
+      var getRootProps = _ref7.getRootProps,
+          getInputProps = _ref7.getInputProps,
+          isDragActive = _ref7.isDragActive,
+          isDragReject = _ref7.isDragReject,
+          acceptedFiles = _ref7.acceptedFiles;
       return (
         /*#__PURE__*/
         _react["default"].createElement("div", (0, _extends2["default"])({
@@ -34368,9 +34447,9 @@ function Selector() {
         /*#__PURE__*/
         _react["default"].createElement("input", (0, _extends2["default"])({
           type: "file"
-        }, getInputProps())), isDragActive ? "Drop your file here!" : 'Click here or drag a file to upload!')
+        }, getInputProps())), !isDragActive && acceptedFiles.length == 0 && "Click here or drag a file to upload!", isDragActive && !isDragReject && "Drop your file here!", isDragActive && isDragReject && "Please enter an image file", acceptedFiles.length > 0 && !isDragActive && !isDragReject && acceptedFiles[0].name)
       );
-    })),
+    }),
     /*#__PURE__*/
     _react["default"].createElement(_reactTabs.TabPanel, null,
     /*#__PURE__*/
@@ -34381,6 +34460,7 @@ function Selector() {
     _react["default"].createElement("input", {
       id: "message",
       type: "text",
+      placeholder: "Enter your message here",
       onChange: function onChange() {
         return updateMessage();
       }
@@ -34401,16 +34481,6 @@ function Selector() {
       id: "selectWrapper2"
     },
     /*#__PURE__*/
-    _react["default"].createElement("input", {
-      id: "inf2",
-      type: "file",
-      name: "file",
-      accept: "image/x-png,image/gif,image/jpeg",
-      onChange: function onChange(e) {
-        return updateDecode(e);
-      }
-    }),
-    /*#__PURE__*/
     _react["default"].createElement("button", {
       id: "f2",
       type: "submit",
@@ -34418,7 +34488,7 @@ function Selector() {
       onClick: function onClick() {
         return uploadDecode();
       }
-    }, "Decode File")))))
+    }, "Decode File"))))))))
   );
 }
 
@@ -34431,8 +34501,10 @@ function Heading() {
   );
 }
 
-function Main() {
+function LandingPage() {
   return (
+    /*#__PURE__*/
+    _react["default"].createElement(_react["default"].Fragment, null,
     /*#__PURE__*/
     _react["default"].createElement("div", {
       id: "page"
@@ -34440,22 +34512,13 @@ function Main() {
     /*#__PURE__*/
     _react["default"].createElement(Heading, null),
     /*#__PURE__*/
-    _react["default"].createElement(Selector, null))
-  );
-}
-
-function Page() {
-  return (
-    /*#__PURE__*/
-    _react["default"].createElement(_react["default"].Fragment, null,
-    /*#__PURE__*/
-    _react["default"].createElement(Main, null))
+    _react["default"].createElement(Selector, null)))
   );
 }
 
 _reactDom["default"].render(
 /*#__PURE__*/
-_react["default"].createElement(Page, null), document.getElementById('root'));
+_react["default"].createElement(LandingPage, null), document.getElementById('root'));
 },{"@babel/runtime/helpers/asyncToGenerator":3,"@babel/runtime/helpers/extends":4,"@babel/runtime/helpers/interopRequireDefault":5,"@babel/runtime/helpers/interopRequireWildcard":6,"@babel/runtime/helpers/slicedToArray":9,"@babel/runtime/regenerator":13,"crypto":112,"fs":57,"react":43,"react-dom":25,"react-dropzone":26,"react-tabs":40,"superagent":51}],57:[function(require,module,exports){
 
 },{}],58:[function(require,module,exports){

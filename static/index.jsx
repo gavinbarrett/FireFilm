@@ -13,23 +13,34 @@ function Selector() {
 	const [filepath, changeFile] = useState(null);
 	const [decfilepath, changeDecFile] = useState(null);
 	const [message, changeMessage] = useState('');
-
-	const updateFile = event => {
-		// update the filepath
-	}
+	const [key, setKey] = useState(0);
 
 	const updateMessage = async message => {
 		// retrieve the input value
 		let x = document.getElementById("message").value;
-		// change state to the new value
+		// change state to the new message value
 		await changeMessage(x);
 	}
 	
-	const awaitResponse = async (path) => {
+	const awaitEncode = async (path) => {
 		let formData = new FormData();
+		// append the image file
 		formData.append('file', filepath);
+		// append the secret message
 		formData.append('message', message);
+		// retrieve the encoded image
 		const resp = await fetch(path, { method: "POST", body: formData });
+		// return the image's base64
+		return await resp.json();
+	}
+	
+	const awaitDecode = async (path) => {
+		let formData = new FormData();
+		// append the encoded file
+		formData.append('decfile', decfilepath);
+		// retrieve the decoded message
+		const resp = await fetch(path, { method: "POST", body: formData });
+		// return the image's message
 		return await resp.json();
 	}
 
@@ -56,15 +67,15 @@ function Selector() {
 
 	const uploadFile = async () => {
 		/* send image with POST request */
-		await awaitResponse('/upload')
+		await awaitEncode('/upload')
 			.then(response => {
 			let str = response['enc'];
 			console.log(str);
 			if (str == "None")
 				return;
-			//let canvas = document.getElementById("img");
-			//let context = canvas.getContext('2d')
+			// get the sha256 hash on the file
 			let fp = getFileHash(str);
+			// begin download of encoded file
 			startDownload(str, fp);
 		});
 	}
@@ -72,54 +83,69 @@ function Selector() {
 	const uploadDecode = async () => {
 		/* send image with POST request */		
 		let imgData = new FormData();
+		console.log('decfile');
+		console.log(decfilepath);
 		// append append file to the FormData
-		imgData.append("file", state.decodepath);
+		imgData.append("decfile", decfilepath);
 		// send AJAX POST request to server
-		await awaitResponse(imgData, '/decode')
+		await awaitDecode('/decode')
 			.then(response => {
+			console.log(response);
 			let str = response['decoded'];
 			console.log(atob(str));
 		});
 	}
 
 	const onDrop = async file => {
-		// FIXME: if encode flag is set, call updateFile
 		// else call updateDecodeFile
+		// encode tab is selected
 		console.log('calling onDrop');
 		console.log(file[0]);
-		await changeFile(file[0]);
+		console.log("Key: " + key);
+		if (!key)
+			await changeFile(file[0]);
+		else
+			await changeDecFile(file[0]);
 	};
+
+	
 
 	return(
 	<React.Fragment>
-	<Tabs>
+	<div id="selectorWrapper">
+	<Tabs onSelect={k => setKey(k)}>
 	<TabList>
 	<Tab>Encode</Tab>
 	<Tab>Decode</Tab>
 	</TabList>
+	<div id="dropwrapper">
 	<div id="dropdiv">
 	<Dropzone id="dropping" accept="image/*" onDrop={file => onDrop(file)}>
- 		{({getRootProps, getInputProps, isDragActive}) => (
+ 		{({getRootProps, getInputProps, isDragActive, isDragReject, acceptedFiles}) => (
     	<div id="dropper" {...getRootProps()}>
       	<input type="file" {...getInputProps()} />
-      	{isDragActive ? "Drop your file here!" : 'Click here or drag a file to upload!'}
-    	</div>
+      	{!isDragActive && acceptedFiles.length == 0 && "Click here or drag a file to upload!"}
+		{isDragActive && !isDragReject && "Drop your file here!"}
+		{isDragActive && isDragReject && "Please enter an image file"}
+		{acceptedFiles.length > 0 && !isDragActive && !isDragReject && acceptedFiles[0].name}
+		</div>
   	)}
 	 </Dropzone>
-	 </div>
 	 <TabPanel>
 	 <div id="selectWrapper">
-	 <input id="message" type="text" onChange={() => updateMessage()}/>
+	 <input id="message" type="text" placeholder="Enter your message here" onChange={() => updateMessage()}/>
 	 <button id="f" type="submit" className="file-submit" onClick={() => uploadFile()}>Submit File</button>
 	 </div>
 	 </TabPanel>
 	 <TabPanel>
 	 <div id="selectWrapper2">
-	 <input id="inf2" type="file" name="file" accept="image/x-png,image/gif,image/jpeg" onChange={(e) => updateDecode(e)}/>
 	 <button id="f2" type="submit" className="file-submit" onClick={() => uploadDecode()}>Decode File</button>
 	 </div>
 	 </TabPanel>
+	 </div>
+	 </div>
 	 </Tabs>
+	 </div>
 	</React.Fragment>);
 }
 
@@ -131,21 +157,15 @@ function Heading() {
 	);
 }
 
-function Main() {
+function LandingPage() {
 	return(
+		<React.Fragment>
 		<div id="page">
 		<Heading />
 		<Selector />
 		</div>
-	);
-}
-
-function Page() {
-	return(
-		<React.Fragment>
-		<Main />
 		</React.Fragment>
 	);
 }
 
-ReactDOM.render(<Page/>, document.getElementById('root'));
+ReactDOM.render(<LandingPage />, document.getElementById('root'));

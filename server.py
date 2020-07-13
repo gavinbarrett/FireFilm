@@ -28,7 +28,7 @@ def encode_image():
 
 @app.route('/decode', methods=['POST'])
 def decode_image():
-	r = request.files['file']
+	r = request.files['decfile']
 	# read the image
 	data = r.read()
 	# attempt to decode the image
