@@ -120,22 +120,29 @@ def encode(data, msg):
 	''' encode message into the image '''
 	# get dynamic buffer to demarcate message
 	buffers = init_buffers(msg)
-	#print(f'buffers: {buffers}')	
+	# convert the message to a binary string
 	binary = ascii_to_binary(msg)
-	#print(f'ta: {ta}')
 	# ready payload for delivery into image
 	payload = buffers + binary + buffers
 	# load the binary bata as a PIL Image
 	img = Image.open(BytesIO(data), 'r')
+	#print(img.mode)
+	if (img.mode != 'RGBA' or img.mode != 'RGB'):
+		#print('converting')
+		img = img.convert(mode='RGBA')
+	# convert format to PNG
+	if (img.format != 'PNG'):
+		#print('Changing format')
+		o = BytesIO()
+		img.save(o, 'PNG')
+		img = Image.open(o, 'r')
 	# extract RGBA pixel data of the image
 	pixels = list(img.getdata())
 	#new_img = stegraph(pixels, payload)
 	new_img = write_to_file(pixels, payload)
 
 	newer = [bin_to_hex(''.join(list(payload[x:x+8]))) for x in range(0, len(payload), 8)]
-	print(img.mode)
 	new_pix = pixelize(new_img, 4) if img.mode == 'RGBA' else pixelize(new_img)
-	print(new_pix[:10])
 	img.putdata(new_pix)
 
 	out = BytesIO()

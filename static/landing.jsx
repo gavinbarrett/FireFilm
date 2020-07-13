@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import Dropzone from 'react-dropzone';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import { useDropzone } from 'react-dropzone';
-import ajax from 'superagent';
 
 const fs = require('fs');
 const crypto = require('crypto');
@@ -57,8 +56,9 @@ function Selector() {
 	const getFileHash = (str) => {
 		let b64str = str.slice(22, str.length);
 		let x = atob(b64str);
-		const st = new Uint8Array(x);
-		console.log(st);
+		const st = new Uint8Array(x.length);
+		for (let i = 0; i < x.length; i++)
+			st[i] = x[i];
 		let hash = crypto.createHash('sha256')
 			.update(st)
 			.digest('hex');
@@ -70,7 +70,6 @@ function Selector() {
 		await awaitEncode('/upload')
 			.then(response => {
 			let str = response['enc'];
-			console.log(str);
 			if (str == "None")
 				return;
 			// get the sha256 hash on the file
@@ -92,20 +91,13 @@ function Selector() {
 			.then(response => {
 			console.log(response);
 			let str = response['decoded'];
-			console.log(atob(str));
+			alert("The message is:\n" + atob(str));
 		});
 	}
 
 	const onDrop = async file => {
-		// else call updateDecodeFile
-		// encode tab is selected
-		console.log('calling onDrop');
-		console.log(file[0]);
-		console.log("Key: " + key);
-		if (!key)
-			await changeFile(file[0]);
-		else
-			await changeDecFile(file[0]);
+		// update the appropriate file path based on the key
+		(!key) ? await changeFile(file[0]) : await changeDecFile(file[0]);
 	};
 
 	
